@@ -1,0 +1,3 @@
+[submodule "kanjibase64izer\\data\\kanjivg"]
+	path = kanjibase64izer\\data\\kanjivg
+	url = https://github.com/KanjiVG/kanjivg.git

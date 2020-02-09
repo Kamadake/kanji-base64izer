@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Card HTML</title>
+
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <!-- This whiteboard would be in your front card -->
+    <div class="whiteboard">
+        <div id="kanjiContainer" class="strokeOrder"></div>
+        <div class="whiteboard_dottedlines">
+            <span class="lines_horizontal"></span>
+            <span class="lines_vertical"></span>
+          </div>
+    </div>
+    
+    <!-- 
+        These are some basic controls to do the following:
+        1) Hide the Kanji so that you can draw in the box and practice
+        2) Show or Hide the kanji stroke order
+        3) Animate the kanji symbol to see how the stokes are drawn
+    -->
+    <div id="kanjiControls">
+		<button onclick="toggleSVG()">Toggle SVG</button>
+		<button onclick="toggleStrokeOrder()">Toggle Stroke Order</button>
+		<button onclick="reanimateKanji()">Animate Kanji</button>
+    </div>
+    
+    <script src="script.js"></script>
+    <script src="example.js"></script>
+</body>
+</html>

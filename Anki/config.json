@@ -1,0 +1,5 @@
+{"mode": "spectrum",
+    "group-mode": false,
+    "model":"japanese",
+    "src-field":"Kanji",
+    "dst-field":"Diagram"}
