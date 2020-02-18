@@ -2,6 +2,7 @@
 import os
 # regular expression operations
 import re
+import base64
 from errno import ENOENT as FILE_NOT_FOUND
 import sys
 
@@ -119,14 +120,16 @@ class KanjiVG(object):
 
 class KanjiBase64izer:
     def __init__(self, argstring=""):
-        self._init_.parser()
-        self.read_arg_string(argstring)
+        self._init_parser()
+        if (len(argstring) > 0):
+            self.read_arg_string(argstring)
 
     # Parse configuration
     def _init_parser(self):
         self._parser = argparse.ArgumentParser(description="Output a Base64 encoding of the SVG file")
-        self._parser.add_argument("--remove-numbers", default=false, type=bool, help="Remove the stroke numbers from the SVG element")
+        self._parser.add_argument("--remove-numbers", default=False, type=bool, help="Remove the stroke numbers from the SVG element")
         self._parser.add_argument("--preferred-variant", type=str, help="If there is a variant of the requested Kanji, pick that instead")
+        self._parser.add_argument("--character", type=str, required=True, help="The character that you want to get the Base64 value of")
 
     # do a command line approach where it outputs the base64 value of a kanji
     def read_cl_args(self):
@@ -135,17 +138,27 @@ class KanjiBase64izer:
     def read_arg_string(self, argstring):
         self.settings = self._parser.parse_args(argstring.split())
 
-    def get_svg_html(self):
-        return
-
-
-    # def get_base64_svg(self, character):
     # this is where the magic happens
-    # svg = KanjiVG(character).svg
+    def get_base64_svg(self, character):
+        # Character is added from arguments
+        if (character):
+            svg = KanjiVG(character, self.settings.preferred_variant).svg
+        else:
+            svg = KanjiVG(self.settings.character, self.settings.preferred_variant).svg
+        
+        svgText = re.findall("<svg.*?<\/svg>", svg, re.DOTALL)[0]
+        if (self.settings.remove_numbers):
+            svgText = self._remove_strokes(svgText)
+
+        encodedBytes = base64.b64encode(svgText.encode("utf-8"))
+        encodedStr = str(encodedBytes, "utf-8")
+        return encodedStr
 
     # we don't need a write_all cause it doesn't make sense in this context
     # what we want is that it returns a value on demand
 
+
+    
     def _remove_strokes(self, svg):
         return re.sub("<text.*?</text>", "", svg)
 

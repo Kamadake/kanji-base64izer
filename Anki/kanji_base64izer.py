@@ -45,19 +45,8 @@ from ..kanjibase64izer.base64izer import (KanjiVG, KanjiBase64izer,
                                       InvalidCharacterError)
 
 # Configuration
-
 addon_config = mw.addonManager.getConfig(__name__)
-
-config = "--mode "
-config += addon_config["mode"]
-if addon_config["group-mode"]:
-  config += " --group-mode "
-config += " --saturation "
-config += str(addon_config["saturation"])
-config += " --value "
-config += str(addon_config["value"])
-config += " --image-size "
-config += str(addon_config["image-size"])
+config = ""
 
 modelNameSubstring = 'japanese'
 srcField           = 'Kanji'
@@ -71,8 +60,7 @@ if 'src-field' in addon_config and type(addon_config['src-field']) is str:
 if 'dst-field' in addon_config and type(addon_config['dst-field']) is str:
     dstField = addon_config['dst-field']
 
-kc = KanjiColorizer(config)
-
+kb64 = KanjiBase64izer(config)
 
 def modelIsCorrectType(model):
     '''
@@ -87,7 +75,7 @@ def modelIsCorrectType(model):
                          dstField in fields)
 
 
-def characters_to_colorize(s):
+def characters_to_convert(s):
     '''
     Given a string, returns a lost of characters to colorize
     If the string consists of only a single character, returns a list
@@ -116,16 +104,16 @@ def addKanji(note, flag=False, currentFieldIndex=None):
     oldDst = note[dstField]
     dst=''
 
-    for character in characters_to_colorize(str(srcTxt)):
+    for character in characters_to_convert(str(srcTxt)):
         # write to file; anki works in the media directory by default
         try:
             filename = KanjiVG(character).ascii_filename
         except InvalidCharacterError:
             # silently ignore non-Japanese characters
             continue
-        char_svg = kc.get_colored_svg(character).encode('utf_8')
-        anki_fname = mw.col.media.writeData(filename, char_svg)
-        dst += '<img src="{!s}">'.format(anki_fname)
+        base64SVG = kb64.get_base64_svg(character);
+        anki_fname = mw.col.media.writeData(filename, base64SVG)
+        dst += anki_fname
 
     if dst != oldDst and dst != '':
         note[dstField] = dst
@@ -135,8 +123,7 @@ def addKanji(note, flag=False, currentFieldIndex=None):
     return flag
 
 
-# Add a colorized kanji to a Diagram whenever leaving a Kanji field
-
+# Add a kanji to a Diagram whenever leaving a Kanji field
 def onFocusLost(flag, note, currentFieldIndex):
     return addKanji(note, flag, currentFieldIndex)
 
@@ -144,7 +131,6 @@ addHook('editFocusLost', onFocusLost)
 
 
 # menu item to regenerate all
-
 def regenerate_all():
     # Find the models that have the right name and fields; faster than
     # checking every note
@@ -160,6 +146,6 @@ def regenerate_all():
     showInfo("Done regenerating colorized kanji diagrams!")
 
 # add menu item
-do_regenerate_all = QAction("Kanji Colorizer: (re)generate all", mw)
-do_regenerate_all.triggered.connect(regenerate_all)
-mw.form.menuTools.addAction(do_regenerate_all)
+#do_regenerate_all = QAction("Kanji Colorizer: (re)generate all", mw)
+#do_regenerate_all.triggered.connect(regenerate_all)
+#mw.form.menuTools.addAction(do_regenerate_all)
