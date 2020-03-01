@@ -37,20 +37,19 @@
 # settings, use the "Kanji Colorizer: (re)generate all" option in the
 # tools menu.
 
-from anki.hooks import addHook
 from aqt import mw
 from aqt.utils import showInfo, askUser
 from aqt.qt import *
-from ..kanjibase64izer.base64izer import (KanjiVG, KanjiBase64izer,
-                                      InvalidCharacterError)
+from anki.hooks import addHook
+from ..kanjibase64izer.base64izer import (KanjiVG, KanjiBase64izer, InvalidCharacterError)
 
 # Configuration
 addon_config = mw.addonManager.getConfig(__name__)
 config = ""
 
 modelNameSubstring = 'japanese'
-srcField           = 'Kanji'
-dstField           = 'Diagram'
+srcField = 'Kanji'
+dstField = 'Diagram'
 
 # avoid errors due to invalid config
 if 'model' in addon_config and type(addon_config['model']) is str:

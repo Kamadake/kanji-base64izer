@@ -5,6 +5,7 @@ import re
 import base64
 from errno import ENOENT as FILE_NOT_FOUND
 import sys
+import csv
 
 try:
     import argparse
@@ -105,7 +106,7 @@ class KanjiVG(object):
             return '%s-%s.svg' % (self.character, self.variant)
 
     @classmethod
-    def get_all(cls):
+    def get_all(cls, ignoreVariants = False):
         '''
         Returns a complete list of KanjiVG objects; everything there is
         data for
@@ -115,6 +116,9 @@ class KanjiVG(object):
         '''
         kanji = []
         for file in os.listdir(source_directory):
+            if (ignoreVariants is True and file.find("-") != -1):
+                continue
+
             kanji.append(cls._create_from_filename(file))
         return kanji
 
@@ -138,14 +142,22 @@ class KanjiBase64izer:
     def read_arg_string(self, argstring):
         self.settings = self._parser.parse_args(argstring.split())
 
-    # this is where the magic happens
-    def get_base64_svg(self, character):
-        # Character is added from arguments
-        if (character):
-            svg = KanjiVG(character, self.settings.preferred_variant).svg
-        else:
-            svg = KanjiVG(self.settings.character, self.settings.preferred_variant).svg
+    # write all the kanji base64 to a CSV file
+    def write_all_to_file(self):
+        characters = KanjiVG.get_all(ignoreVariants=True)
+        dst_csv_path = os.path.join(os.path.curdir, "kanji.csv")
+        # mark BOM for UTF-8
+        with open(dst_csv_path, "w", encoding="utf_8_sig") as f:
+            f.write("")
         
+        for kanji in characters:
+            dataRow = [kanji.character, self.svg_to_base64(kanji)]
+            with open(dst_csv_path, "a", newline="", encoding="utf_8_sig") as f:
+                writer = csv.writer(f, delimiter=",")
+                writer.writerow(dataRow)
+
+    def svg_to_base64(self, kanjiVGObject):
+        svg = kanjiVGObject.svg
         svgText = re.findall("<svg.*?<\/svg>", svg, re.DOTALL)[0]
         if (self.settings.remove_numbers):
             svgText = self._remove_strokes(svgText)
@@ -154,11 +166,15 @@ class KanjiBase64izer:
         encodedStr = str(encodedBytes, "utf-8")
         return encodedStr
 
+    # this is where the magic happens
+    def get_base64_svg(self, character = None):
+        # Character is added from arguments
+        character = (character is None) and self.settings.character or character
+        kanjiVGObject = KanjiVG(character, self.settings.preferred_variant)
+        return self.svg_to_base64(kanjiVGObject)
+
     # we don't need a write_all cause it doesn't make sense in this context
     # what we want is that it returns a value on demand
-
-
-    
     def _remove_strokes(self, svg):
         return re.sub("<text.*?</text>", "", svg)
 

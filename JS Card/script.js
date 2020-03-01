@@ -6,6 +6,7 @@ const kanjiContainerID = "kanjiContainer";
 const svgWidth = "300";
 const svgHeight = "300";
 const kanjiContainer = document.getElementById(kanjiContainerID);
+const dataLengthAttributeName = "data-length";
 
 /* Add leading zeros depending on the length of the string
 * (Mainly used for string values representing hex values)
@@ -68,8 +69,6 @@ function HSVtoRGBHex(h, s, v) {
 
 // Contains methods to change Promise state of drawing
 let nextDrawDeferred;
-// Interval ID that provides animation (TODO: Would like to change it to use requestAnimationFrame() instead)
-let currentIntervalID;
 
 /**
  * Stops the animation drawing
@@ -78,8 +77,6 @@ function stopDrawing() {
 	if (nextDrawDeferred) {
 		nextDrawDeferred.reject("Drawing Halted");
 	}
-	
-	clearInterval(currentIntervalID);
 }
 
 /**
@@ -88,14 +85,19 @@ function stopDrawing() {
  * @param {HTMLPathElement[]} paths Paths found inside the SVG Element
  */
 async function drawPaths(paths) {
+	let stopAnimation = false;
 	for (const path of paths) {
-		const pathLength = Math.ceil(path.getTotalLength());
+		if (stopAnimation) {
+			return;
+		}
+
+		const pathLength = path.getAttribute(dataLengthAttributeName);
 		const timeToDraw = pathLength * timePerDot;
 
 		let currentOffset = pathLength;
-		let intervalID = currentIntervalID = setInterval(() => {
+		let intervalID = setInterval(() => {
 			path.style["stroke-dashoffset"] = currentOffset--;
-			if (currentOffset === 0) {
+			if (currentOffset <= 0) {
 				clearInterval(intervalID);
 			}
 		}, timePerDot);
@@ -103,7 +105,7 @@ async function drawPaths(paths) {
 		await new Promise(function (resolve, reject) {
 			nextDrawDeferred = {resolve: resolve, reject: reject};
 			setTimeout(() => resolve(), timeToDraw);
-		});
+		}).then(null, () => {clearInterval(intervalID); stopAnimation = true;});
 	}
 }
 
@@ -116,8 +118,9 @@ function animateKanji(kanjiObject) {
 		let kanjiPaths = kanjiObject.querySelectorAll("path");
 		// Set all path dashoffset to their array length
 		for (const path of kanjiPaths) {
-			path.style["stroke-dasharray"] = Math.ceil(path.getTotalLength());
-			path.style["stroke-dashoffset"] = Math.ceil(path.getTotalLength());
+			path.setAttribute(dataLengthAttributeName, Math.ceil(path.getTotalLength()));
+			path.style["stroke-dasharray"] = path.getAttribute(dataLengthAttributeName);
+			path.style["stroke-dashoffset"] = path.getAttribute(dataLengthAttributeName);
 		}
 
 		// Pass all the paths to an async function that will wait for each
